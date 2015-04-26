@@ -24,6 +24,7 @@ int main()
 		FD_SET(sock_udp,&fds);
 		FD_SET(sock_icmp,&fds);
 		FD_SET(sock_tcp,&fds);
+		printf("setting\n");
 		int ret = select(max+1, &fds, NULL, NULL, NULL);
 		if( ret < 0 )
 		{
@@ -44,24 +45,33 @@ int main()
 			{
 				perror("Error in recieving the data");
 			}
+			printf("Its an UDP packet\n");
 			printf("got %d size packets\n", data_size);
 		}
 		if( FD_ISSET(sock_tcp, &fds))
-		{
+		{	
+			data_size = read(sock_tcp, buffer, MAX_SIZE);
+			if( data_size < 0 )
+			{
+				perror("Error in recieving the data");
+			}
+			printf("got %d size packets\n", data_size);	
 			// Its a TCP packet
-			printf("Its a TCP packet\n");
-
+			if( find_trans_protocol(buffer) == 1 )
+			{
+				printf("Its a TCP packet\n");
+			}
 		}
 		if( FD_ISSET(sock_icmp, &fds))
 		{
+			data_size = read(sock_icmp, buffer, MAX_SIZE);
+			if( data_size < 0 )
+			{
+				perror("Error in recieving the data");
+			}
+			printf("got %d size packets\n", data_size);	
 			// Its an ICMP packet
 			printf("its an ICMP packet\n");
 		}
 	}
-	/*int fd = socket(PF_PACKET, SOCK_RAW, IPPROTO_RAW);
-	while(1)
-	{
-		int r = read(fd, buffer, MAX_SIZE);
-		printf("Read %d bytes\n",r);
-	}*/
 }
