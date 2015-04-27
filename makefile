@@ -1,12 +1,10 @@
 all:	main.o netflow.o packet_handler.o
-	gcc -o netflow main.o netflow.o packet_handler.o
-	
+	gcc -g -o netflow netflow.o packet_handler.o main.o -lpcap
 main.o:	main.c common.h
-	gcc -c main.c
-
+	gcc -g -c main.c
 netflow.o: netflow.c netflow.h
-	gcc -c netflow.c
+	gcc -g -c netflow.c
 packet_handler.o: packet_handler.c packet_handler.h
-	gcc -c packet_handler.c
+	gcc -g -c packet_handler.c
 clean:	
 	rm *.o

@@ -2,6 +2,7 @@
 
 typedef struct flow_entry
 {
+	uint32_t time_captured;
 	uint32_t src_IP;
 	uint32_t dst_IP;
 	uint16_t src_port;
@@ -33,7 +34,6 @@ typedef struct flow_cache
    If the flow is already present, then it updates the counters.
 */
 int add_flow(flow_cache* cache, uint8_t src_int, uint8_t* ip_packet);
-
 /*
    This method will interate through the flows present and displays them.
 */
