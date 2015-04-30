@@ -51,19 +51,19 @@ typedef struct table_entry
 {
 	flow_entry_t* flowentry;
 	struct table_entry* next;
+	struct table_entry* prev;
 }table_entry_t;
 
 typedef struct hash_table
 {
 	struct table_entry_t* list[HASH_BUCKETS];
-
 }hash_table_t;
 
 /* 
    This method will add a new flow to the cache if the flow is not present.
    If the flow is already present, then it updates the counters.
 */
-int update_flow(flow_cache_t* cache, uint8_t src_int, uint8_t* ip_packet, hash_table_t* table);
+int update_flow(flow_cache_t* cache, char* src_int, uint8_t* ip_packet, hash_table_t* table, struct pcap_pkthdr *packet_info);
 /*
    This method will interate through the flows present and displays them.
 */
@@ -74,7 +74,7 @@ int show_flows(flow_cache_t* cache);
 int delete_flow(flow_cache_t* cache, flow_entry_t* entry, hash_table_t* table);
 
 /* Creates a flow in the flow cache and also allocates a struct in hash table pointing to the flow cache entry created  */
-flow_entry_t* create_flow(flow_cache_t* cache, hash_table_t* table,uint32_t src_ip, uint32_t dst_ip, uint16_t sport, uint16_t dport, uint8_t protocol)
+flow_entry_t* create_flow(flow_cache_t* cache, hash_table_t* table,uint32_t src_ip, uint32_t dst_ip, uint16_t sport, uint16_t dport, uint8_t protocol);
 
 /* This computes the bucket inside the hash table */
 int compute_bucket(uint64_t hash);
@@ -89,6 +89,11 @@ void update_details(flow_entry_t* flow,uint8_t* packet, struct pcap_pkthdr* pack
 flow_entry_t* if_flow_exist(hash_table_t* table, int bucket_no, uint32_t ip_src, uint32_t ip_dst, uint16_t src_port, uint16_t dst_port, \
 			uint8_t proto);
 
+table_entry_t* create_bucket_node( flow_entry_t* entry, table_entry_t* prev, table_entry_t* next );
+
+void add_to_bucket( hash_table_t* table, int bucket_no, flow_entry_t* flow);
+
+flow_entry_t* create_flow_node(flow_entry_t* prev, flow_entry_t* next);
 
 /* HASH TABLE RELATED FUNCTIONS */
 /* This will hash the flow 5 tuple to a bucket on the hash table */

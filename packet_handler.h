@@ -76,4 +76,8 @@ typedef struct ether_hdr {
 /*
 	This is the callback function. It is called when a packet comes or leaves the interface
 */
-void handle_packet(uint8_t *args, const struct pcap_pkthdr *header, const uint8_t *packet);
+void handle_packet(uint8_t *args, const struct pcap_pkthdr *header, uint8_t *packet);
+
+
+/* Sanity checks */
+int sanity_checks(uint8_t* packet);

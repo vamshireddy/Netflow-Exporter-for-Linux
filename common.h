@@ -7,5 +7,7 @@
 #include <linux/types.h>
 #include <pcap.h>
 #include <openssl/md5.h>
+#include <limits.h>
+#include <assert.h>
 
 #define MAX_SIZE 65535

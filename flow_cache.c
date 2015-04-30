@@ -1,6 +1,13 @@
+#ifndef FLOW_CACHE
+#define FLOW_CACHE
 #include "flow_cache.h"
+#endif
+#ifndef PACKET
+#define PACKET
+#include "packet_handler.h"
+#endif
 
-void update_flow(flow_cache_t* cache, uint8_t src_int, uint8_t* ip_packet, hash_table_t* table, struct pcap_pkthdr *packet_info)
+int update_flow(flow_cache_t* cache, char* src_int, uint8_t* ip_packet, hash_table_t* table, struct pcap_pkthdr *packet_info)
 {
 	/* Get the flow tuples */
 	uint16_t src_port = 0;
@@ -46,6 +53,7 @@ void update_flow(flow_cache_t* cache, uint8_t src_int, uint8_t* ip_packet, hash_
 	{
 		/* Flow not present in the hash table, creates a flow entry with the basic tuples ( 5 tuples ) */
 		flow = create_flow(cache, table, ip->ip_src, ip->ip_dst, src_port, dst_port, ip->ip_p);
+		assert(flow!=NULL);
 		if( copy_details(flow, ip_packet) == -1 )
 		{
 			printf("Malformed packet while copying\n");
@@ -68,10 +76,44 @@ flow_entry_t* if_flow_exist(hash_table_t* table, int bucket_no, uint32_t ip_src,
 	}
 	return NULL;
 }
-
 flow_entry_t* create_flow(flow_cache_t* cache, hash_table_t* table,uint32_t src_ip, uint32_t dst_ip, uint16_t sport, uint16_t dport, uint8_t protocol)
 {
+	/* Create flow in the flow cache and also in the hash table */
+	flow_entry_t* node = NULL;
+	if( ( cache->first == NULL && cache->last !=NULL )|| ( cache->first == NULL && cache->last !=NULL ) )
+	{
+		/* Error */
+		return NULL;
+	}
+	else if( cache->first == NULL && cache->last == NULL )
+	{
+		node = create_flow_node(NULL, NULL);
+		assert(node!=NULL);
+		cache->first = node;
+		cache->last = node;
+	}
+	else if( cache->first != NULL && cache->last != NULL )
+	{	
+		flow_entry_t* temp = cache->first;
+		node = create_flow_node(NULL, temp);
+		assert(node!=NULL);
+		temp->prev = node;
+		cache->first = node;
+	}
+	/* Now copy the fields */	
+	node->src_ipv4 = src_ip;
+	node->dst_ipv4 = dst_ip;
+	node->src_port = sport;
+	node->dst_port = dport;
+	node->protocol = protocol;
+	/* Add this node to the hash table */
 	
+	uint64_t hash = hash_packet(src_ip, dst_ip, sport, dport, protocol);
+	int bucket_no = compute_bucket(hash);
+	
+	add_to_bucket(table,bucket_no,node);
+	/* Flow entry added to the bucket */
+	return node;
 }
 
 
@@ -136,4 +178,86 @@ void update_details(flow_entry_t* flow, uint8_t* packet, struct pcap_pkthdr* pac
 	{
 		flow->max_ttl_ipv4 = ip->ip_ttl;
 	}
+}
+
+
+flow_entry_t* create_flow_node(flow_entry_t* prev, flow_entry_t* next)
+{
+	flow_entry_t* node = (flow_entry_t*)malloc(sizeof(flow_entry_t));
+	assert(node!=NULL);
+	node->prev = prev;
+	node->next = next;
+	return node;
+}
+
+
+int clear_flow(flow_entry_t* flow)
+{
+	flow->src_ipv4 = 0;
+	flow->dst_ipv4 = 0;
+	flow->src_port = 0;
+	flow->dst_port = 0;
+	flow->protocol = 0;
+	flow->tos_ipv4 = 0;
+	flow->id_ipv4 = 0;
+	flow->ingress_int = NULL;
+	flow->egress_int = NULL;
+	flow->bytes = 0;
+	flow->packet_count = 0;
+	flow->flow_direction = 0;
+	bzero(flow->src_mac, 8);
+	bzero(flow->dst_mac, 8);
+	flow->next_hop_ipv4 = 0;
+	flow->min_packet_len = ULONG_MAX;
+	flow->max_packet_len = 0;
+	flow->min_ttl_ipv4 = UCHAR_MAX;
+	flow->max_ttl_ipv4 = 0;
+	flow->active_time = 0;
+	flow->passive_time = 0;
+}
+
+
+int show_flows(flow_cache_t* cache)
+{
+	flow_entry_t* temp = cache->first;
+	while( temp!=NULL )
+	{
+		printf("There is a flow\n");	
+	}
+}
+
+
+int copy_details(flow_entry_t* flow, uint8_t* ip_packet) 
+{
+	/* TODO */
+	return 1;
+}
+
+
+void add_to_bucket( hash_table_t* table, int bucket_no, flow_entry_t* flow)
+{
+	/* TODO init table to NULL */
+	table_entry_t* old_node = table->list[bucket_no];
+	table_entry_t* new_node = NULL;
+	if( old_node == NULL )
+	{
+		new_node = create_bucket_node(flow, NULL, NULL);
+		assert(new_node!=NULL);
+	}
+	else
+	{
+		new_node = create_bucket_node(flow, NULL, old_node);
+		assert(new_node!=NULL);
+		old_node->prev = new_node;
+	}
+	table->list[bucket_no] = new_node;
+}
+
+table_entry_t* create_bucket_node( flow_entry_t* entry, table_entry_t* prev, table_entry_t* next )
+{
+	table_entry_t* temp = (table_entry_t*)malloc(sizeof(table_entry_t));				
+	temp->flowentry = entry;
+	temp->prev = prev;
+	temp->next = next;
+	return temp;
 }
