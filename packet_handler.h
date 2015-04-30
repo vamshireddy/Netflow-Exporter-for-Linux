@@ -4,6 +4,10 @@
 /*
  * Structure of an internet header, naked of options.
  */
+
+#define IP_PROTO_TCP 6
+#define IP_PROTO_UDP 17
+
 struct ip_hdr
 {
     	uint8_t ip_vhl;				/* version and header length */

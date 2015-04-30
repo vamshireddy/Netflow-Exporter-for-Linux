@@ -1,6 +1,8 @@
 #include "common.h"
 
 #define HASH_BUCKETS 256
+#define HASH_INPUT_LEN 13
+#define DIGEST_LEN 16
 
 /* Flow entry */
 typedef struct flow_entry
@@ -34,26 +36,26 @@ typedef struct flow_entry
 	// LinkedList Pointers
 	struct flow_entry* next;
 	struct flow_entry* prev;
-} flow_entry_t;
+}flow_entry_t;
 
 /* Cache */
 typedef struct flow_cache
 {
-	flow_entry* first;
-	flow_entry* last;
+	flow_entry_t* first;
+	flow_entry_t* last;
 	uint64_t flow_count;
 } flow_cache_t;
 
 /* Flow hash table */
 typedef struct table_entry
 {
-	flow_entry_t* entry;
+	flow_entry_t* flowentry;
 	struct table_entry* next;
 }table_entry_t;
 
 typedef struct hash_table
 {
-	struct table_entry* list[HASH_BUCKETS];
+	struct table_entry_t* list[HASH_BUCKETS];
 
 }hash_table_t;
 
@@ -61,33 +63,33 @@ typedef struct hash_table
    This method will add a new flow to the cache if the flow is not present.
    If the flow is already present, then it updates the counters.
 */
-int update_flow(flow_cache* cache, uint8_t src_int, uint8_t* ip_packet, hash_table_t* table);
+int update_flow(flow_cache_t* cache, uint8_t src_int, uint8_t* ip_packet, hash_table_t* table);
 /*
    This method will interate through the flows present and displays them.
 */
-int show_flows(flow_cache* cache);
+int show_flows(flow_cache_t* cache);
 /*
    This will delete the given entry from the flow cache
 */
-int delete_flow(flow_cache* cache, flow_entry* entry, hash_table_t* table);
+int delete_flow(flow_cache_t* cache, flow_entry_t* entry, hash_table_t* table);
 
 /* Creates a flow in the flow cache and also allocates a struct in hash table pointing to the flow cache entry created  */
-flow_entry_t* create_flow(flow_cache* cache, hash_table_t* table, uint8_t* packet);
+flow_entry_t* create_flow(flow_cache_t* cache, hash_table_t* table,uint32_t src_ip, uint32_t dst_ip, uint16_t sport, uint16_t dport, uint8_t protocol)
 
 /* This computes the bucket inside the hash table */
 int compute_bucket(uint64_t hash);
 
 /* Copy details */
-void copy_details(flow_entry_t* entry, uint8_t* packet);
+int copy_details(flow_entry_t* entry, uint8_t* packet);
 
 /* This will update the details of an exisiting flow */
-void update_details(flow_entry_t* flow,uint8_t* packet,uint64_t packet_size);
+void update_details(flow_entry_t* flow,uint8_t* packet, struct pcap_pkthdr* packet_info);
 
 /* This will check if the flow exists in the flow cache. If flow exists, it returns the pointer to the flow entry, else NULL */
-flow_entry_t* if_flow_exist(hash_table_t* table, table_entry_t* bucket, uint32_t ip_src, uint32_t ip_dst, uint16_t src_port, uint16_t dst_port, \
+flow_entry_t* if_flow_exist(hash_table_t* table, int bucket_no, uint32_t ip_src, uint32_t ip_dst, uint16_t src_port, uint16_t dst_port, \
 			uint8_t proto);
 
 
 /* HASH TABLE RELATED FUNCTIONS */
 /* This will hash the flow 5 tuple to a bucket on the hash table */
-int64_t hash_packet(uint16_t src_ip, uint32_t dst_ip, uint16_t sport, uint16_t dport, uint16_t protocol);
+int64_t hash_packet(uint32_t src_ip, uint32_t dst_ip, uint16_t sport, uint16_t dport, uint8_t protocol);

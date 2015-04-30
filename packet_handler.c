@@ -27,9 +27,11 @@ void handle_packet(uint8_t *args, const struct pcap_pkthdr *header, const uint8_
 	}
 	/* Sanity checks include ip_checksum, udp or tcp checksum, header_len checks */
 	if( sanity_checks(packet) == 1 )
-		update_flow(flow_cache, interface, packet, hash_table);
+		update_flow(flow_cache, interface, packet, hash_table, header);
 	free(ethernet);
 	free(ip);
+	free(header);
+	free(packet);
 }
 
 void print_ip_header(uint8_t* packet)
