@@ -7,6 +7,7 @@
 
 #define IP_PROTO_TCP 6
 #define IP_PROTO_UDP 17
+#define IP_PROTO_ICMP 1
 
 struct ip_hdr
 {
@@ -23,7 +24,7 @@ struct ip_hdr
     	uint8_t ip_p;				/* protocol */
     	uint16_t ip_sum;			/* checksum */
     	uint32_t ip_src, ip_dst;		/* source and dest address */
-} __attribute__ ((packed)) ;
+};
 typedef struct ip_hdr ip_hdr_t;
 
 #define IP_HL(ip)		(((ip)->ip_vhl) & 0x0f)
@@ -72,6 +73,7 @@ typedef struct ether_hdr {
 	uint8_t ether_shost[ETHER_ADDR_LEN]; 	/* Source host address */
 	uint16_t ether_type; 	/* IP? ARP? RARP? etc */
 }ether_hdr_t;
+
 
 /*
 	This is the callback function. It is called when a packet comes or leaves the interface
