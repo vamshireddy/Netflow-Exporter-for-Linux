@@ -11,6 +11,7 @@
 #define MAIN
 #include"main.h"
 #endif
+
 int update_flow(char* src_int, uint8_t* ip_packet, struct pcap_pkthdr *packet_info)
 {
 	/* Get the flow tuples */
@@ -69,6 +70,8 @@ int update_flow(char* src_int, uint8_t* ip_packet, struct pcap_pkthdr *packet_in
 		/* Flow not present in the hash table, creates a flow entry with the basic tuples ( 5 tuples ) */
 		flow = create_flow(ip->ip_src, ip->ip_dst, src_port, dst_port, ip->ip_p);
 		assert(flow!=NULL);
+		/* Update the current packet to the flow */
+		update_details(flow, ip_packet, packet_info);
 		/* Init entries of flow */
 		if( copy_details(flow, ip_packet) == -1 )
 		{
@@ -127,7 +130,8 @@ flow_entry_t* create_flow(uint32_t src_ip, uint32_t dst_ip, uint16_t sport, uint
 	node->src_port = sport;
 	node->dst_port = dport;
 	node->protocol = protocol;
-	
+
+
 	/* Add this node to the hash table */	
 	uint64_t hash = hash_packet(src_ip, dst_ip, sport, dport, protocol);
 	int bucket_no = compute_bucket(hash);
@@ -179,6 +183,8 @@ void update_details(flow_entry_t* flow, uint8_t* packet, struct pcap_pkthdr* pac
 	/* Update the packet size and count to the flow */
 	flow->packet_count++;
 	flow->bytes += packet_info->len;
+	/* Time */
+	memcpy(&flow->time_captured,&packet_info->ts,sizeof(struct timeval));
 	/* Update min and max len */
 	if( packet_info->len < flow->min_packet_len )
 	{
@@ -215,6 +221,7 @@ flow_entry_t* create_flow_node(flow_entry_t* prev, flow_entry_t* next)
 
 int clear_flow(flow_entry_t* flow)
 {
+	bzero((void*)&flow->time_captured, sizeof(struct timeval));
 	flow->src_ipv4 = 0;
 	flow->dst_ipv4 = 0;
 	flow->src_port = 0;
@@ -234,8 +241,6 @@ int clear_flow(flow_entry_t* flow)
 	flow->max_packet_len = 0;
 	flow->min_ttl_ipv4 = UCHAR_MAX;
 	flow->max_ttl_ipv4 = 0;
-	flow->active_time = 0;
-	flow->passive_time = 0;
 }
 
 

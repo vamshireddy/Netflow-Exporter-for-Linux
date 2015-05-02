@@ -7,7 +7,7 @@
 /* Flow entry */
 typedef struct flow_entry
 {
-	uint32_t time_captured;
+	struct timeval time_captured;
 	/* Key */
 	uint32_t src_ipv4;
 	uint32_t dst_ipv4;
@@ -30,9 +30,6 @@ typedef struct flow_entry
 	uint64_t max_packet_len;
 	uint8_t min_ttl_ipv4;
 	uint8_t max_ttl_ipv4;
-	// Timers : Active and passive
-	uint64_t active_time;
-	uint64_t passive_time;
 	// LinkedList Pointers
 	struct flow_entry* next;
 	struct flow_entry* prev;
