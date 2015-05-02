@@ -57,23 +57,25 @@ int update_flow(char* src_int, uint8_t* ip_packet, struct pcap_pkthdr *packet_in
 	/* Check for the existence of the flow */
 	flow_entry_t* flow = NULL;
 	
-	if( (flow = if_flow_exist(bucket_no, ip->ip_src, ip->ip_dst, src_port, dst_port, ip->ip_p)) == NULL )
+	if( (flow = if_flow_exist(bucket_no, ip->ip_src, ip->ip_dst, src_port, dst_port, ip->ip_p)) != NULL )
 	{
-		printf("Flow doesn't exists\n");
+		printf("Flow exists\n");
 		/* Flow exists in the Hash table. Now update the flow with the details */
 		update_details(flow, ip_packet, packet_info);				
 	}	
 	else
 	{
-		printf("Flow is present\n");
+		printf("Flow not present\n");
 		/* Flow not present in the hash table, creates a flow entry with the basic tuples ( 5 tuples ) */
 		flow = create_flow(ip->ip_src, ip->ip_dst, src_port, dst_port, ip->ip_p);
 		assert(flow!=NULL);
+		/* Init entries of flow */
 		if( copy_details(flow, ip_packet) == -1 )
 		{
 			printf("Malformed packet while copying\n");
 		}
 	}
+	show_flows();
 }
 
 flow_entry_t* if_flow_exist(int bucket_no, uint32_t ip_src, uint32_t ip_dst, uint16_t src_port, uint16_t dst_port, uint8_t proto)
@@ -92,11 +94,12 @@ flow_entry_t* if_flow_exist(int bucket_no, uint32_t ip_src, uint32_t ip_dst, uin
 	}
 	return NULL;
 }
+
 flow_entry_t* create_flow(uint32_t src_ip, uint32_t dst_ip, uint16_t sport, uint16_t dport, uint8_t protocol)
 {
 	/* Create flow in the flow cache and also in the hash table */
 	flow_entry_t* node = NULL;
-	if( ( flowCache.first == NULL && flowCache.last !=NULL )|| ( flowCache.first == NULL && flowCache.last !=NULL ) )
+	if( ( flowCache.first == NULL && flowCache.last !=NULL ) || ( flowCache.first != NULL && flowCache.last ==NULL ) )
 	{
 		/* Error */
 		return NULL;
@@ -116,14 +119,16 @@ flow_entry_t* create_flow(uint32_t src_ip, uint32_t dst_ip, uint16_t sport, uint
 		temp->prev = node;
 		flowCache.first = node;
 	}
+	clear_flow(node);
+
 	/* Now copy the fields */	
 	node->src_ipv4 = src_ip;
 	node->dst_ipv4 = dst_ip;
 	node->src_port = sport;
 	node->dst_port = dport;
 	node->protocol = protocol;
-	/* Add this node to the hash table */
 	
+	/* Add this node to the hash table */	
 	uint64_t hash = hash_packet(src_ip, dst_ip, sport, dport, protocol);
 	int bucket_no = compute_bucket(hash);
 	
@@ -194,6 +199,7 @@ void update_details(flow_entry_t* flow, uint8_t* packet, struct pcap_pkthdr* pac
 	{
 		flow->max_ttl_ipv4 = ip->ip_ttl;
 	}
+	printf("Count: %d Bytes: %d\n",flow->packet_count, flow->bytes);
 }
 
 
@@ -235,11 +241,14 @@ int clear_flow(flow_entry_t* flow)
 
 int show_flows()
 {
+	printf("\n\n\n");
 	flow_entry_t* temp = flowCache.first;
 	while( temp!=NULL )
 	{
 		printf("There is a flow\n");	
+		temp = temp->next;
 	}
+	printf("\n\n\n");
 }
 
 
@@ -252,7 +261,6 @@ int copy_details(flow_entry_t* flow, uint8_t* ip_packet)
 
 void add_to_bucket(int bucket_no, flow_entry_t* flow)
 {
-	/* TODO init table to NULL */
 	table_entry_t* old_node = hashTable.list[bucket_no];
 	table_entry_t* new_node = NULL;
 	if( old_node == NULL )

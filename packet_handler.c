@@ -34,10 +34,6 @@ void handle_packet(uint8_t *args, const struct pcap_pkthdr *header, uint8_t *pac
 		printf("Updating flow\n");
 		update_flow(interface, packet+ETHER_HDR_LEN, header);
 	}
-	free(ethernet);
-	free(ip);
-	free(header);
-	free(packet);
 }
 
 int sanity_checks(uint8_t* packet)
