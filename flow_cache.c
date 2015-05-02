@@ -12,7 +12,7 @@
 #include"main.h"
 #endif
 
-int update_flow(char* src_int, uint8_t* ip_packet, struct pcap_pkthdr *packet_info)
+int update_flow(char* src_int, uint8_t* packet, struct pcap_pkthdr *packet_info)
 {
 	/* Get the flow tuples */
 	uint16_t src_port = 0;
@@ -20,9 +20,11 @@ int update_flow(char* src_int, uint8_t* ip_packet, struct pcap_pkthdr *packet_in
 	tcp_hdr_t* tcp = NULL;
 	udp_hdr_t* udp = NULL;	
 	/* Calculate the Hash for the five tuple */
-	
+
 	uint64_t hash;
 
+	uint8_t* ip_packet = packet + ETHER_HDR_LEN;
+	
 	ip_hdr_t* ip = (ip_hdr_t*)ip_packet;
 	int size_ip = IP_HL(ip)*4;
 	printf("Header len: %d\n",size_ip);
@@ -73,7 +75,7 @@ int update_flow(char* src_int, uint8_t* ip_packet, struct pcap_pkthdr *packet_in
 		/* Update the current packet to the flow */
 		update_details(flow, ip_packet, packet_info);
 		/* Init entries of flow */
-		if( copy_details(flow, ip_packet) == -1 )
+		if( copy_details(flow, packet) == -1 )
 		{
 			printf("Malformed packet while copying\n");
 		}
@@ -229,8 +231,8 @@ int clear_flow(flow_entry_t* flow)
 	flow->protocol = 0;
 	flow->tos_ipv4 = 0;
 	flow->id_ipv4 = 0;
-	flow->ingress_int = NULL;
-	flow->egress_int = NULL;
+	flow->ingress_int = 0;
+	flow->egress_int = 0;
 	flow->bytes = 0;
 	flow->packet_count = 0;
 	flow->flow_direction = 0;
@@ -257,9 +259,21 @@ int show_flows()
 }
 
 
-int copy_details(flow_entry_t* flow, uint8_t* ip_packet) 
+int copy_details(flow_entry_t* flow, uint8_t* eth_packet) 
 {
-	/* TODO */
+	/* MAC */
+	ether_hdr_t* hdr = (ether_hdr_t*)eth_packet;
+	memcpy(&flow->src_mac, ether_hdr_t->ether_shost, sizeof(ether_hdr_t->ether_shost));
+	memcpy(&flow->dst_mac, ether_hdr_t->ether_dhost, sizeof(ether_hdr_t->ether_dhost));
+	
+	ip_hdr_t* ip = (ip_hdr_t*)(packet+ETHER_HDR_LEN);
+	flow->tos_ipv4 = ip->tos;
+	flow->id_ipv4 = ip->id;
+	flow->egress_int = "eth0";
+	flow->ingress_int = "eth0";
+	
+	/* TODO routing table next hop and interface */
+
 	return 1;
 }
 

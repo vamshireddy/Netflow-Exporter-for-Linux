@@ -21,7 +21,7 @@ void handle_packet(uint8_t *args, const struct pcap_pkthdr *header, uint8_t *pac
 	}
 
 	/* IP Packet */
-	ip_hdr_t* ip = (ip_hdr_t*)(packet + ETHER_HDR_LEN);
+	ip_hdr_t* ip = (ip_hdr_t*)packet;
 	int size_ip = IP_HL(ip)*4;
 	if( size_ip < 20 )
 	{

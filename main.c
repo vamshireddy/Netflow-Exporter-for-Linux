@@ -38,11 +38,6 @@ void housekeeping()
 
 int main(int argc, char* argv[])
 {
-	if( argc != 2 )
-	{
-		printf("Usage: sudo ./netflow <ip_address>\n");
-		return;
-	}
 	pcap_t* pcap_fd = NULL;
 	char errbuff[PCAP_ERRBUF_SIZE];
 	char* device = "eth0";
@@ -50,7 +45,7 @@ int main(int argc, char* argv[])
 
 	/* Open the device */
 	pcap_fd = pcap_open_live(device, MAXBYTES2CAPTURE, 0, 512, errbuff);
-	if( pcap_fd == -1 )
+	if( pcap_fd == NULL )
 	{
 		printf("Cannot open the pcap\n");
 		exit(0);
@@ -60,7 +55,7 @@ int main(int argc, char* argv[])
 
 	struct bpf_program* filter_s = (struct bpf_program*)malloc(sizeof(struct bpf_program));
 
-	if( pcap_compile(pcap_fd, filter_s, "tcp or udp", 0, argv[1] ) == -1 )
+	if( pcap_compile(pcap_fd, filter_s, "tcp or udp", 0, NULL ) == -1 )
 	{
 		perror("PCAP compile");
 		return;

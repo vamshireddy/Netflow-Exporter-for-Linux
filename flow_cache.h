@@ -14,14 +14,16 @@ typedef struct flow_entry
 	uint16_t src_port;
 	uint16_t dst_port;
 	uint8_t protocol;
-	/* Key */
+
 	uint8_t tos_ipv4;
 	uint16_t id_ipv4;
 	uint8_t ingress_int;
 	uint8_t egress_int;
+	/* Stats */
 	uint64_t bytes;
 	uint64_t packet_count;
 	uint8_t flow_direction;
+	/* MAC */
 	uint8_t src_mac[6];
 	uint8_t dst_mac[6];
 	/* Additional fields */
