@@ -21,7 +21,7 @@ void handle_packet(uint8_t *args, const struct pcap_pkthdr *header, uint8_t *pac
 	}
 
 	/* IP Packet */
-	ip_hdr_t* ip = (ip_hdr_t*)packet;
+	ip_hdr_t* ip = (ip_hdr_t*)( packet + ETHER_HDR_LEN );
 	int size_ip = IP_HL(ip)*4;
 	if( size_ip < 20 )
 	{
@@ -32,7 +32,7 @@ void handle_packet(uint8_t *args, const struct pcap_pkthdr *header, uint8_t *pac
 	if( sanity_checks(packet) == 1 )
 	{
 		printf("Updating flow\n");
-		update_flow(interface, packet+ETHER_HDR_LEN, header);
+		update_flow(interface, packet, header);
 	}
 }
 

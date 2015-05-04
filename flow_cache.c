@@ -249,10 +249,35 @@ int clear_flow(flow_entry_t* flow)
 int show_flows()
 {
 	printf("\n\n\n");
+	printf("Flow Cache:\n");
+	if( flowCache.first == NULL )
+	{
+		printf("Nothing in cache\n");
+		return;
+	}
 	flow_entry_t* temp = flowCache.first;
+	char src_ip[16];
+	char dst_ip[16];
+	char proto[4];
+	uint16_t src_port;
+	uint16_t dst_port;
+	printf("%16s\t%16s\t%8s\t%8s\t%6s\t%7s\t%7s\n", "SourceIP", "DestIP", "SrcPort", "DstPort", "Proto","Bytes","Count");
+	printf("----------------------------------------------------------------------------------------------------------------\n");
 	while( temp!=NULL )
 	{
-		printf("There is a flow\n");	
+		src_port = ntohs(temp->src_port);	
+		dst_port = ntohs(temp->dst_port);
+		inet_ntop(AF_INET, &temp->src_ipv4, src_ip, 16);
+		inet_ntop(AF_INET, &temp->dst_ipv4, dst_ip, 16);
+		if( temp->protocol == IP_PROTO_TCP)
+		{
+			strcpy(proto,"TCP");
+		}
+		else
+		{
+			strcpy(proto,"UDP");
+		}
+		printf("%16s\t%16s\t%8d\t%8d\t%6s\t%7ld\t%7ld\n", src_ip, dst_ip, src_port, dst_port, proto, temp->bytes, temp->packet_count);
 		temp = temp->next;
 	}
 	printf("\n\n\n");
@@ -263,12 +288,12 @@ int copy_details(flow_entry_t* flow, uint8_t* eth_packet)
 {
 	/* MAC */
 	ether_hdr_t* hdr = (ether_hdr_t*)eth_packet;
-	memcpy(&flow->src_mac, ether_hdr_t->ether_shost, sizeof(ether_hdr_t->ether_shost));
-	memcpy(&flow->dst_mac, ether_hdr_t->ether_dhost, sizeof(ether_hdr_t->ether_dhost));
+	memcpy(flow->src_mac, hdr->ether_shost, 6); 
+	memcpy(flow->dst_mac, hdr->ether_dhost, 6);
 	
-	ip_hdr_t* ip = (ip_hdr_t*)(packet+ETHER_HDR_LEN);
-	flow->tos_ipv4 = ip->tos;
-	flow->id_ipv4 = ip->id;
+	ip_hdr_t* ip = (ip_hdr_t*)(eth_packet+ETHER_HDR_LEN);
+	flow->tos_ipv4 = ip->ip_tos;
+	flow->id_ipv4 = ip->ip_id;
 	flow->egress_int = "eth0";
 	flow->ingress_int = "eth0";
 	
